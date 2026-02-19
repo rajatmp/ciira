@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIRA on IIoT - Upload Data</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Base Styles for consistency with homee.html and datainfo.html */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrolling for a static layout */
+        }
+
+        body {
+            background-color: #0d121b; /* Dark background from homee.html */
+            color: #fff; /* White text for dark mode */
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: flex;
+            flex-direction: column; /* Organize content vertically */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+        }
+
+        body.light-mode {
+            background-color: #f0f2f5; /* Light background */
+            color: #333; /* Dark text for light mode */
+        }
+
+        /* Navigation Bar */
+        nav {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(15, 27, 42, 0.95); /* Semi-transparent dark background */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4); /* Subtle shadow */
+            z-index: 10; /* Ensure nav is on top */
+        }
+
+        body.light-mode nav {
+            background-color: rgba(255, 255, 255, 0.95); /* Semi-transparent light background */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        nav .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: #00d9ff; /* Bright blue for logo */
+            font-size: 25px;
+            display: flex;
+            align-items: center;
+        }
+
+        nav .logo i {
+            font-size: 20px;
+            margin-right: 15px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+        }
+
+        nav ul li a {
+            color: #fff; /* White links */
+            text-decoration: none;
+            font-weight: 300;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        body.light-mode nav ul li a {
+            color: #555; /* Darker links in light mode */
+        }
+
+        nav ul li a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -5px;
+            width: 0;
+            height: 2px;
+            background-color: #00d9ff; /* Underline color */
+            transition: width 0.3s ease;
+        }
+
+        nav ul li a:hover::after,
+        nav ul li a.active::after {
+            width: 100%;
+        }
+
+        nav ul li a.active {
+            color: #00d9ff; /* Active link color */
+            font-weight: 600;
+        }
+
+        body.light-mode nav ul li a.active {
+            color: #007bff; /* Active link color in light mode */
+        }
+
+        nav ul li a:hover {
+            color: #00d9ff; /* Hover color */
+        }
+
+        body.light-mode nav ul li a:hover {
+            color: #007bff; /* Hover color in light mode */
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #fff; /* White button */
+            transition: transform 0.3s ease;
+        }
+
+        body.light-mode nav button {
+            color: #333; /* Dark button in light mode */
+        }
+
+        nav button:hover {
+            transform: scale(1.1);
+        }
+
+        /* Main Content */
+        main {
+            flex-grow: 1; /* Allows main content to take available space */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden; /* For background animations */
+        }
+
+        /* Background Animations (similar to homee.html) */
+        main::before, main::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        main::before {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="400" stroke="%23005bff" stroke-width="3" fill="none" opacity="0.1"/><circle cx="500" cy="500" r="300" stroke="%23005bff" stroke-width="2.5" fill="none" opacity="0.15"/><path d="M500,0 L500,1000 M0,500 L1000,500" stroke="%23005bff" stroke-width="1" opacity="0.05"/></svg>');
+            background-size: cover;
+            animation: subtleRotate 60s linear infinite;
+            opacity: 0.8;
+        }
+
+        main::after {
+            background-image: repeating-linear-gradient(-45deg, rgba(0, 217, 255, 0.18) 0px, rgba(0, 217, 255, 0.18) 2px, transparent 2px, transparent 20px);
+            background-size: 60px 60px;
+            animation: scanLines 30s linear infinite;
+            opacity: 1;
+        }
+
+        @keyframes subtleRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes scanLines {
+            from { background-position: 0 0; }
+            to { background-position: 600px 600px; }
+        }
+
+        body.light-mode main::before {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="400" stroke="%233399ff" stroke-width="2" fill="none" opacity="0.1"/><circle cx="500" cy="500" r="300" stroke="%233399ff" stroke-width="1.5" fill="none" opacity="0.15"/><path d="M500,0 L500,1000 M0,500 L1000,500" stroke="%233399ff" stroke-width="0.5" opacity="0.05"/></svg>');
+        }
+        body.light-mode main::after {
+            background-image: repeating-linear-gradient(-45deg, rgba(0, 123, 255, 0.1) 0px, rgba(0, 123, 255, 0.1) 2px, transparent 2px, transparent 20px);
+        }
+
+        /* Upload Container */
+        .upload-container {
+            background-color: rgba(15, 27, 42, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            animation: fadeIn 1s ease-out;
+            border: 1px solid rgba(0, 217, 255, 0.5);
+        }
+
+        body.light-mode .upload-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0, 123, 255, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .upload-container h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5em;
+            margin-bottom: 25px;
+            color: #00d9ff;
+            text-shadow: 0 0 10px rgba(0, 217, 255, 0.7);
+        }
+
+        body.light-mode .upload-container h1 {
+            color: #007bff;
+            text-shadow: none;
+        }
+
+        .upload-container p {
+            font-size: 1.1em;
+            color: #a0aec0;
+            margin-bottom: 30px;
+        }
+
+        body.light-mode .upload-container p {
+            color: #555;
+        }
+
+        .file-upload-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            border: 2px dashed #005bff;
+            border-radius: 10px;
+            padding: 30px;
+            cursor: pointer;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+            background-color: rgba(0, 217, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body.light-mode .file-input-wrapper {
+            border: 2px dashed #007bff;
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+        .file-input-wrapper:hover {
+            border-color: #00d9ff;
+            background-color: rgba(0, 217, 255, 0.1);
+        }
+
+        body.light-mode .file-input-wrapper:hover {
+            border-color: #007bff;
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-input-wrapper .upload-icon {
+            font-size: 3em;
+            color: #00d9ff;
+            margin-bottom: 10px;
+        }
+
+        body.light-mode .file-input-wrapper .upload-icon {
+            color: #007bff;
+        }
+
+        .file-input-wrapper .upload-text {
+            color: #a0aec0;
+            font-size: 1.1em;
+            text-align: center;
+        }
+
+        body.light-mode .file-input-wrapper .upload-text {
+            color: #555;
+        }
+
+        #file-name {
+            margin-top: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            color: #00d9ff;
+            font-size: 0.9em;
+            word-break: break-all;
+        }
+
+        body.light-mode #file-name {
+            color: #007bff;
+        }
+
+        .upload-button {
+            background: linear-gradient(to right, #00d9ff, #005bff);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 217, 255, 0.4);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        body.light-mode .upload-button {
+            background: linear-gradient(to right, #007bff, #0056b3);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.2);
+        }
+
+        .upload-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 217, 255, 0.6);
+        }
+
+        body.light-mode .upload-button:hover {
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.4);
+        }
+
+        /* Footer */
+        footer {
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            background-color: rgba(15, 27, 42, 0.95);
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.4);
+            margin-top: auto; /* Pushes footer to the bottom */
+            color: #a0aec0;
+        }
+
+        body.light-mode footer {
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+            color: #555;
+        }
+
+        /* Styles for Flash Messages */
+        .flash {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: bold;
+            color: white;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .flash.success {
+            background-color: #2ecc71; /* Green */
+        }
+
+        .flash.danger {
+            background-color: #e74c3c; /* Red */
+        }
+
+        .flash.info {
+            background-color: #3498db; /* Blue */
+        }
+
+        .close-flash {
+            float: right;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            line-height: 1;
+            color: white;
+            margin-left: 10px;
+        }
+
+        /* Custom Message Box */
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .message-box-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .message-box {
+            background-color: #1a2a40;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 217, 255, 0.5);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid #00d9ff;
+            color: #fff;
+            position: relative;
+            transform: translateY(-20px);
+            opacity: 0;
+            animation: slideIn 0.3s forwards;
+        }
+
+        body.light-mode .message-box {
+            background-color: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid #007bff;
+            color: #333;
+        }
+
+        @keyframes slideIn {
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .message-box h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #00d9ff;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        body.light-mode .message-box h3 {
+            color: #007bff;
+        }
+
+        .message-box p {
+            margin-bottom: 25px;
+            font-size: 1.1em;
+        }
+
+        .message-box button {
+            background: linear-gradient(to right, #00d9ff, #005bff);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+        }
+
+        body.light-mode .message-box button {
+            background: linear-gradient(to right, #007bff, #0056b3);
+        }
+
+        .message-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0, 217, 255, 0.6);
+        }
+
+        body.light-mode .message-box button:hover {
+            box-shadow: 0 3px 10px rgba(0, 123, 255, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                padding: 15px 20px;
+            }
+            nav ul {
+                margin-top: 15px;
+                flex-direction: column;
+                gap: 15px;
+            }
+            .upload-container h1 {
+                font-size: 2em;
+            }
+            .upload-container p {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo"><i class="fas fa-shield-alt"></i>CIRA on IIoT</div>
+        <ul>
+            <li><a href="/homee">Dashboard</a></li>
+            <li><a href="{{ url_for('upload_file') }}" class="active">Upload Data</a></li>
+            <li><a href="/model">Model Selection</a></li>
+            <li><a href="/predict">Threat Detection</a></li>
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+        <button onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+    </nav>
+
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">
+                        {{ message }}
+                        <span class="close-flash" onclick="this.parentElement.style.display='none';">&times;</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <main>
+        <div class="upload-container" data-aos="fade-up">
+            <h1><i class="fas fa-upload mr-2"></i>Upload Data for Analysis</h1>
+            <p>Please upload your network traffic data in CSV format to proceed with threat detection.</p>
+
+            <form action="{{ url_for('upload_file') }}" method="POST" enctype="multipart/form-data" class="file-upload-form">
+                <div class="file-input-wrapper">
+                    <input type="file" name="file" id="file-input" accept=".csv" required />
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <span class="upload-text">Drag & Drop your CSV here or Click to Browse</span>
+                    <span id="file-name">No file chosen</span>
+                </div>
+                <button type="submit" class="upload-button">Upload File</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 CIRA on IIoT. All rights reserved.</p>
+    </footer>
+
+    <!-- Custom Message Box HTML -->
+    <div id="message-box-overlay" class="message-box-overlay">
+        <div class="message-box">
+            <h3 id="message-box-title"></h3>
+            <p id="message-box-content"></p>
+            <button onclick="hideMessageBox()">OK</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 1000, once: false });
+
+        function setThemeFromLocalStorage() {
+            const savedTheme = localStorage.getItem('theme');
+            const body = document.body;
+            const themeToggleBtn = document.querySelector('nav button');
+            if (savedTheme === 'light-mode') {
+                body.classList.add('light-mode');
+                themeToggleBtn.innerHTML = '☀';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle dark theme');
+            } else {
+                body.classList.remove('light-mode');
+                themeToggleBtn.innerHTML = '🌙';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle light theme');
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('light-mode');
+            const themeToggleBtn = document.querySelector('nav button');
+            if (body.classList.contains('light-mode')) {
+                themeToggleBtn.innerHTML = '☀';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle dark theme');
+                localStorage.setItem('theme', 'light-mode');
+            } else {
+                themeToggleBtn.innerHTML = '🌙';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle light theme');
+                localStorage.setItem('theme', 'dark-mode');
+            }
+        }
+
+        // Custom Message Box Functions
+        function showMessageBox(title, message) {
+            document.getElementById('message-box-title').textContent = title;
+            document.getElementById('message-box-content').textContent = message;
+            document.getElementById('message-box-overlay').classList.add('active');
+        }
+
+        function hideMessageBox() {
+            document.getElementById('message-box-overlay').classList.remove('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setThemeFromLocalStorage();
+
+            const fileInput = document.getElementById('file-input');
+            const fileNameDisplay = document.getElementById('file-name');
+
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    fileNameDisplay.textContent = this.files[0].name;
+                } else {
+                    fileNameDisplay.textContent = 'No file chosen';
+                }
+            });
+
+            // Set the 'Upload Data' link as active in the navigation bar on this page
+            document.querySelectorAll('nav ul li a').forEach(link => {
+                const linkPath = link.pathname; // Use pathname directly
+                if (linkPath === '/upload' || linkPath === '/upload_file') { // Check for both potential paths
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

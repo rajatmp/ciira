@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CIRA on IIoT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+    <style>
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #0f1b2a;
+            color: #fff;
+            overflow-x: hidden; /* Prevent horizontal scroll due to AOS animations */
+            transition: background-color 0.3s ease, color 0.3s ease;
+            transform-origin: center center; /* Ensure rotation is from the center */
+        }
+
+        /* Styles for Flash Messages */
+        .flash {
+            padding: 12px;
+            margin: 15px auto;
+            width: 80%;
+            max-width: 600px; /* Limit width for better readability */
+            border-radius: 5px;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+            z-index: 1000; /* Ensure flash messages are on top */
+            position: relative; /* Allows z-index to work */
+        }
+        .flash.success {
+            background-color: #2ecc71;
+        }
+        .flash.danger {
+            background-color: #e74c3c;
+        }
+        .flash.warning {
+            background-color: #f39c12;
+        }
+        .flash.info {
+            background-color: #3498db;
+        }
+
+
+        /* New CSS for Rotation Animation */
+        body.rotate-out {
+            animation: rotateOut 0.7s ease-in-out forwards; /* Adjust duration as needed */
+        }
+
+        @keyframes rotateOut {
+            0% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0.5) rotate(360deg); /* Shrink and rotate */
+                opacity: 0;
+            }
+        }
+
+        /* Ensure modals stay on top during body rotation */
+        #modal-overlay, .modal-box {
+            position: fixed; /* Keep them fixed relative to viewport */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000; /* Ensure they are above the rotating body */
+            pointer-events: none; /* Allow clicks to pass through if not active */
+        }
+        .modal-box {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 90%; /* Responsive width */
+            max-width: 400px; /* Max width for larger screens */
+            height: auto; /* Allow height to adjust */
+            padding: 30px;
+        }
+
+        /* Restore pointer-events when modal is active */
+        #modal-overlay.active, .modal-box.active {
+            pointer-events: auto;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            background-color: rgba(15, 27, 42, 0.95);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        nav .logo {
+            font-weight: 700;
+            color: #00d9ff;
+            font-size: 25px;
+            display: flex;
+            align-items: center;
+        }
+
+        nav .logo i {
+            font-size: 20px;
+            margin-right: 15px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+        }
+
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 300;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        nav ul li a::after {
+            content: "";
+            position: absolute;
+            width: 0%;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: #00d9ff;
+            transition: 0.3s ease;
+        }
+
+        nav ul li a:hover::after,
+        nav ul li a.active::after {
+            width: 100%;
+        }
+        nav ul li a.active {
+            color: #00d9ff;
+        }
+
+        .content-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Horizontally center content when space allows */
+            min-height: 100vh;
+            padding: 80px 5%; /* Adjust total padding */
+            position: relative;
+            gap: 40px; /* Space between content and graphics */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .content {
+            flex: 1; /* Allow content to grow */
+            min-width: 300px; /* Ensure it doesn't shrink too much */
+            max-width: 600px; /* Keep max width to prevent it from being too wide */
+            padding: 0; /* Remove specific padding, let content-wrapper padding handle it */
+            position: relative;
+            z-index: 2;
+            text-align: left; /* Align text to left */
+        }
+
+        .content h1 {
+            font-size: 42px; /* Smaller font size */
+            line-height: 1.2;
+            font-weight: 700;
+            min-height: 100px; /* Smaller min-height */
+            transition: opacity 0.5s ease-in-out;
+            padding-top: 20px; /* Moved downwards */
+        }
+
+        .content h1 span {
+            color: #00d9ff;
+        }
+
+        .content p {
+            margin: 15px 0; /* Smaller margin */
+            font-size: 15px; /* Smaller font size */
+            color: #ccc;
+            min-height: 80px; /* Smaller min-height */
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .btns button {
+            padding: 12px 24px;
+            margin-right: 15px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 6px;
+            transition: 0.3s ease;
+        }
+
+        .btns .register-btn {
+            background-color: #00d9ff;
+            color: #0f1b2a;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .btns .register-btn:hover {
+            background-color: #00b3cc;
+            box-shadow: 0 0 10px 3px rgba(0, 217, 255, 0.4);
+        }
+
+        .btns .login-btn {
+            background: transparent;
+            border: 1px solid #00d9ff;
+            color: #00d9ff;
+        }
+        .btns .login-btn:hover {
+            background-color: rgba(0, 217, 255, 0.1);
+        }
+
+        /* Graphics styles - MODIFIED for side-by-side layout and larger size */
+        .graphics {
+            position: relative; /* Change to relative for flow */
+            top: auto; /* Remove absolute positioning properties */
+            right: auto;
+            transform: none;
+
+            flex: 1; /* Allow graphics to grow */
+            min-width: 300px; /* Minimum width for the graphic */
+            max-width: 550px; /* Max width for the graphic - Increased */
+            height: 550px; /* Keep fixed height for now, consider aspect ratio if needed - Increased */
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0; /* Ensure no external margins interfere with flex gap */
+        }
+
+        /* Keyframe for original float animation (keep if still desired for other elements) */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(-50%) translateX(0);
+            }
+            50% {
+                transform: translateY(-50%) translateX(-20px);
+            }
+        }
+
+        /* MODIFIED: Vertically aligned dots */
+        .dots-navigation {
+            position: absolute;
+            left: 5%; /* Align with content */
+            top: 50%; /* Center vertically with content */
+            transform: translateY(-50%); /* Adjust for vertical centering */
+            display: flex;
+            flex-direction: column; /* Make dots vertical */
+            gap: 15px; /* Space between dots */
+            z-index: 3;
+            padding: 10px; /* Add some padding around the dots */
+        }
+
+        .dot {
+            width: 12px; /* Slightly larger dots */
+            height: 12px; /* Slightly larger dots */
+            background-color: #333; /* Darker background for non-active dots */
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid transparent; /* Subtle border for hover effect */
+        }
+
+        .dot:hover {
+            transform: scale(1.2);
+            background-color: #00d9ff; /* Change color on hover */
+            box-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
+        }
+
+        .dot.active {
+            background-color: #00d9ff;
+            transform: scale(1.3); /* Bigger when active */
+            box-shadow: 0 0 8px rgba(0, 217, 255, 0.4); /* Reduced glow for active dot */
+            border-color: #fff; /* White border for active dot */
+        }
+
+        .stats {
+            margin: 80px 10% 40px;
+            display: flex;
+            gap: 60px;
+            color: #00d9ff;
+        }
+
+        .stats div {
+            text-align: center;
+        }
+
+        .stats div span {
+            font-size: 24px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .features {
+            background: #132237;
+            padding: 60px 10%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            justify-content: center;
+            align-items: flex-start;
+            scroll-margin-top: 100px;
+            transition: background-color 0.3s ease;
+        }
+
+        .features h2 {
+            font-size: 28px;
+            text-align: center;
+            margin-bottom: 40px;
+            color: #fff;
+            width: 100%;
+        }
+
+        .feature {
+            flex: 1;
+            min-width: 220px;
+            max-width: 300px;
+            background: #1a2d45;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .feature:hover {
+            background: #223954;
+        }
+
+        .feature i {
+            font-size: 28px;
+            color: #00d9ff;
+            margin-bottom: 15px;
+        }
+
+        .feature h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .testimonials {
+            padding: 60px 10%;
+            background: #101f33;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .testimonials h2 {
+            margin-bottom: 40px;
+            font-size: 28px;
+        }
+
+        .testimonial {
+            max-width: 600px;
+            margin: 0 auto;
+            font-style: italic;
+            color: #ccc;
+        }
+
+        footer {
+            padding: 40px 10%;
+            background: #0c1828;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            color: #888;
+            font-size: 14px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .footer-left {
+            margin-bottom: 20px;
+        }
+
+        .footer-social {
+            margin-left: auto;
+            margin-right: 0;
+            display: flex;
+            gap: 12px;
+        }
+
+        .footer-social i {
+            color: #00d9ff;
+            cursor: pointer;
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #00d9ff;
+            color: #000;
+            padding: 12px 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: none;
+            z-index: 99;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- Modal Overlays & Generic Modal Box --- */
+        #modal-overlay {
+            display: none;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-box {
+            background: #1a2d45;
+            padding: 30px;
+            border-radius: 12px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out, background-color 0.3s ease, color 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .modal-box.active {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* --- Specific Styles for Forms within Modal --- */
+        .modal-box h2 {
+            color: #00d9ff;
+            margin-bottom: 20px;
+            font-size: 2em;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .modal-box .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .modal-box .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #3a414e;
+            border-radius: 8px;
+            background-color: #0c1828;
+            color: #fff;
+            font-size: 1em;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+        }
+
+        .modal-box .form-group input:focus {
+            border-color: #00d9ff;
+            box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.3);
+            outline: none;
+        }
+
+        .modal-box .form-group input::placeholder {
+            color: #8894a4;
+        }
+
+        .modal-box button.submit-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: #00d9ff;
+            color: #0f1b2a;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .modal-box button.submit-btn:hover {
+            background-color: #00b3cc;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-box button.submit-btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .modal-box .switch-form-link {
+            margin-top: 20px;
+            font-size: 0.95em;
+            color: #c0c0c0;
+            text-align: center;
+        }
+
+        .modal-box .switch-form-link a {
+            color: #00d9ff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease, text-decoration 0.3s ease;
+        }
+
+        .modal-box .switch-form-link a:hover {
+            color: #00b3cc;
+            text-decoration: underline;
+        }
+
+        /* Light Mode Styles */
+        body.light-mode {
+            background-color: #f5f5f5;
+            color: #111;
+        }
+        body.light-mode nav {
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        body.light-mode nav .logo i {
+            color: #007bff;
+        }
+        body.light-mode nav ul li a {
+            color: #111;
+        }
+        body.light-mode nav ul li a::after {
+            background-color: #007bff;
+        }
+        body.light-mode footer,
+        body.light-mode .features,
+        body.light-mode .testimonials,
+        body.light-mode .modal-box {
+            background-color: #fff;
+            color: #111;
+        }
+        body.light-mode .features h2 {
+            color: #111;
+        }
+        body.light-mode .feature {
+            background: #eee;
+        }
+        body.light-mode .feature:hover {
+            background: #ddd;
+        }
+        body.light-mode .modal-box {
+            background: #f0f0f0;
+            color: #111;
+        }
+        body.light-mode .modal-box .form-group input {
+            background-color: #fff;
+            color: #111;
+            border: 1px solid #ccc;
+        }
+        body.light-mode .modal-box .form-group input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+            outline: none;
+        }
+        body.light-mode .modal-box .form-group input::placeholder {
+            color: #666;
+        }
+        body.light-mode .modal-box button.submit-btn {
+            background-color: #007bff;
+            color: #fff;
+        }
+        body.light-mode .modal-box button.submit-btn:hover {
+            background-color: #0056b3;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+        body.light-mode .modal-box .switch-form-link a {
+            color: #007bff;
+        }
+        body.light-mode .modal-box .switch-form-link a:hover {
+            color: #0056b3;
+        }
+        body.light-mode .dot {
+            background-color: #ccc;
+        }
+        body.light-mode .dot.active {
+            background-color: #00d9ff;
+        }
+        body.light-mode .content h1, body.light-mode .content p {
+            color: #111;
+        }
+        body.light-mode .content p {
+            color: #555;
+        }
+        body.light-mode .back-to-top {
+            background-color: #00d9ff;
+            color: #000;
+        }
+        body.light-mode .btns .register-btn {
+            background-color: #007bff;
+            color: #fff;
+        }
+        body.light-mode .btns .register-btn:hover {
+            background-color: #0056b3;
+            box-shadow: 0 0 10px 3px rgba(0, 123, 255, 0.2);
+        }
+        body.light-mode .btns .login-btn {
+            border: 1px solid #007bff;
+            color: #007bff;
+        }
+        body.light-mode .btns .login-btn:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+
+        /* Responsive adjustments */
+        @media screen and (max-width: 768px) {
+            nav ul {
+                display: none;
+            }
+
+            .content-wrapper {
+                flex-direction: column;
+                padding-top: 100px;
+                align-items: center;
+                gap: 20px; /* Reduce gap on smaller screens */
+            }
+
+            .content {
+                padding: 0 5%; /* Re-add padding for smaller screens if needed */
+                text-align: center;
+                max-width: 100%;
+                margin-bottom: 0; /* No margin-bottom needed if gap handles it */
+            }
+
+            .graphics {
+                position: static; /* Change to static for normal flow */
+                transform: none; /* Remove transform for centering with margin */
+                width: 90%; /* Increased width for smaller screens */
+                max-width: 400px; /* Max-width */
+                height: 300px; /* Adjusted height for responsiveness */
+                margin: 0 auto; /* Center horizontally with margin */
+                top: auto;
+            }
+
+            /* MODIFIED: Dots on smaller screens */
+            .dots-navigation {
+                position: static; /* Remove absolute positioning */
+                flex-direction: row; /* Horizontal dots on small screens */
+                justify-content: center; /* Center them */
+                margin-top: 20px; /* Space from content */
+                transform: none; /* Remove transform */
+                left: auto;
+                top: auto;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+                align-items: center;
+            }
+
+            .features {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            footer {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            .footer-social {
+                margin-top: 10px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+
+        /* CSS from model.html, adjusted for integration */
+        :root {
+            --hud-bg-color: #000a12; /* Very dark blue/black */
+            --hud-green: #00ff7f; /* Neon green */
+            --hud-blue: #00bfff; /* Deep sky blue */
+            --hud-red: #ff4500; /* Orange-red for threats */
+            --hud-light-gray: #b0c4de; /* Light blue-grey */
+            --text-glow-strength: 0 0 5px var(--hud-green), 0 0 10px var(--hud-green);
+            --ring-glow-strength: 0 0 8px var(--hud-green), 0 0 15px var(--hud-blue);
+            --threat-glow-strength: 0 0 8px var(--hud-red), 0 0 15px var(--hud-red);
+        }
+
+        .hud-container {
+            position: relative;
+            width: 100%; /* Make it fill the .graphics container */
+            height: 100%; /* Make it fill the .graphics container */
+            background-color: rgba(0, 5, 10, 0.8);
+            border: 2px solid var(--hud-blue);
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+            overflow: hidden; /* To keep grid lines within bounds */
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif; /* Sci-fi font, apply here */
+            color: var(--hud-green);
+        }
+
+        /* --- Background Grid Lines --- */
+        .grid-lines {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(to right, rgba(0, 255, 127, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 255, 127, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px; /* Adjust grid cell size */
+            opacity: 0.2;
+            animation: gridScan 10s linear infinite;
+        }
+
+        .grid-lines.horizontal {
+            background-image: linear-gradient(to right, rgba(0, 255, 127, 0.1) 1px, transparent 1px);
+            background-size: 50px 100%;
+        }
+
+        .grid-lines.vertical {
+            background-image: linear-gradient(to bottom, rgba(0, 255, 127, 0.1) 1px, transparent 1px);
+            background-size: 100% 50px;
+        }
+
+        @keyframes gridScan {
+            0% { background-position: 0 0; }
+            100% { background-position: 50px 50px; } /* Shifts the grid */
+        }
+
+
+        /* --- Center Area (Shield and Rings) --- */
+        .center-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%; /* Adjusted for responsiveness */
+            height: 90%; /* Adjusted for responsiveness */
+            max-width: 480px; /* Retained max width - this ensures it can be larger */
+            max-height: 480px; /* Retained max height - this ensures it can be larger */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .concentric-ring {
+            position: absolute;
+            border: 2px solid var(--hud-green);
+            border-radius: 50%;
+            box-shadow: var(--ring-glow-strength);
+            opacity: 0.6;
+        }
+
+        .ring-1 {
+            width: 50%;
+            height: 50%;
+            animation: pulseRing 3s ease-in-out infinite alternate;
+        }
+
+        .ring-2 {
+            width: 70%;
+            height: 70%;
+            animation: pulseRing 3.5s ease-in-out infinite alternate-reverse;
+        }
+
+        .ring-3 {
+            width: 90%;
+            height: 90%;
+            animation: pulseRing 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseRing {
+            0% { transform: scale(0.95); opacity: 0.6; border-color: var(--hud-green); }
+            50% { transform: scale(1.05); opacity: 0.8; border-color: var(--hud-blue); }
+            100% { transform: scale(0.95); opacity: 0.6; border-color: var(--hud-green); }
+        }
+
+        .shield-core {
+            position: relative;
+            width: 30%; /* Adjusted for responsiveness */
+            height: 30%; /* Adjusted for responsiveness */
+            min-width: 120px; /* Retained minimum size */
+            min-height: 120px; /* Retained minimum size */
+            background-color: var(--hud-green);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--text-glow-strength);
+            z-index: 10;
+        }
+
+        .shield-icon {
+            width: 50%;
+            height: 60%;
+            background-color: transparent;
+            border: 5px solid var(--hud-blue);
+            border-radius: 0 0 25px 25px / 0 0 25px 25px; /* Bottom rounded */
+            position: relative;
+        }
+
+        .shield-icon::before {
+            content: '';
+            position: absolute;
+            width: 5px;
+            height: 30%;
+            background-color: var(--hud-blue);
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .shield-icon::after {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 5px;
+            background-color: var(--hud-blue);
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+
+        .scan-line-rotator {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            animation: rotate360 8s linear infinite;
+            z-index: 5; /* Below shield core */
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 0%, var(--hud-blue) 50%, transparent 100%);
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.3;
+        }
+
+        @keyframes rotate360 {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Dynamic lines emanating from center */
+        .dynamic-line {
+            position: absolute;
+            background: linear-gradient(to right, transparent, var(--hud-green), transparent);
+            height: 2px;
+            width: 30%; /* Length of the lines, relative to center-area */
+            transform-origin: left center;
+            animation: linePulse 2s ease-in-out infinite alternate;
+            opacity: 0.6;
+            z-index: 5;
+        }
+
+        .dynamic-line-1 {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            animation-delay: 0s;
+        }
+        .dynamic-line-2 {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(135deg);
+            animation-delay: 0.5s;
+        }
+        .dynamic-line-3 {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(225deg);
+            animation-delay: 1s;
+        }
+        .dynamic-line-4 {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(315deg);
+            animation-delay: 1.5s;
+        }
+
+        @keyframes linePulse {
+            0% { transform: scaleX(0.5); opacity: 0.3; }
+            100% { transform: scaleX(1); opacity: 0.8; }
+        }
+
+
+        /* --- Status Panel - MODIFIED for smaller size --- */
+        .status-panel {
+            position: absolute;
+            padding: 5px; /* Further Reduced padding */
+            background-color: rgba(0, 10, 20, 0.7);
+            border: 1px solid var(--hud-blue);
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
+            border-radius: 5px;
+            min-width: 160px; /* Further Reduced min-width */
+        }
+
+        .status-panel.top-right {
+            top: 20px;
+            right: 20px;
+        }
+
+        .status-panel h2 {
+            margin-top: 0;
+            margin-bottom: 10px; /* Further Reduced margin-bottom */
+            font-size: 1em; /* Further Reduced font size */
+            text-align: center;
+            color: var(--hud-light-gray);
+            text-shadow: var(--text-glow-strength);
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px; /* Further Reduced margin-bottom */
+            font-size: 0.7em; /* Further Reduced font size */
+        }
+
+        .status-item span {
+            color: var(--hud-light-gray);
+        }
+
+        .status-item .value {
+            font-weight: bold;
+            text-shadow: var(--text-glow-strength);
+        }
+
+        .value.green { color: var(--hud-green); }
+        .value.yellow { color: gold; }
+        .value.red { color: var(--hud-red); text-shadow: var(--threat-glow-strength); }
+
+        .status-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: rgba(0, 255, 127, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .status-bar {
+            height: 100%;
+            width: 100%; /* Will be updated by JS */
+            background-color: var(--hud-green);
+            border-radius: 5px;
+            transition: width 0.5s ease-out;
+            box-shadow: var(--text-glow-strength);
+        }
+
+        .scan-text {
+            font-size: 0.8em;
+            text-align: center;
+            margin-top: 10px;
+            color: var(--hud-light-gray);
+            opacity: 0.7;
+            animation: blink 1.5s step-end infinite;
+        }
+
+        /* --- Threat Indicators --- */
+        .threat-indicator {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--hud-red);
+            text-shadow: var(--threat-glow-strength);
+            font-size: 0.8em;
+            opacity: 0; /* Hidden by default */
+            transition: opacity 0.5s ease-in-out;
+            pointer-events: none; /* Allows clicks to pass through */
+            z-index: 20;
+        }
+
+        .threat-dot {
+            width: 20px;
+            height: 20px;
+            background-color: var(--hud-red);
+            border-radius: 50%;
+            box-shadow: var(--threat-glow-strength);
+            animation: threatBlink 1s linear infinite;
+            margin-bottom: 5px;
+            border: 2px solid rgba(255, 69, 0, 0.5);
+        }
+
+        .threat-text {
+            background-color: rgba(255, 69, 0, 0.2);
+            padding: 3px 8px;
+            border-radius: 3px;
+            border: 1px solid var(--hud-red);
+            white-space: nowrap;
+            animation: threatTextGlow 1.5s ease-in-out infinite alternate;
+        }
+
+        /* Specific positions for threats (adjust as needed based on your video) */
+        /* These positions need to be relative to the .hud-container or .graphics */
+        .threat-indicator.threat-1 {
+            top: 20%;
+            left: 20%;
+        }
+        .threat-indicator.threat-2 {
+            top: 70%;
+            left: 30%;
+        }
+        .threat-indicator.threat-3 {
+            top: 40%;
+            right: 15%;
+        }
+
+
+        /* --- Keyframe Animations --- */
+        @keyframes blink {
+            from, to { opacity: 0.7; }
+            50% { opacity: 0.2; }
+        }
+
+        @keyframes threatBlink {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+        }
+
+        @keyframes threatTextGlow {
+            0%, 100% { box-shadow: var(--threat-glow-strength); }
+            50% { box-shadow: 0 0 15px var(--hud-red), 0 0 30px var(--hud-red); }
+        }
+
+
+        /* Basic responsiveness for model.html content within .graphics */
+        @media (max-width: 768px) {
+            .hud-container {
+                width: 100%;
+                height: 100%;
+            }
+            .status-panel {
+                font-size: 0.8em;
+                padding: 10px;
+                top: 10px;
+                right: 10px;
+                min-width: unset; /* Allow it to shrink more on small screens */
+            }
+            .center-area {
+                width: 90%;
+                height: 90%;
+            }
+            /* Rings scale relative to center-area, so adjust min sizes if needed */
+            .concentric-ring.ring-1 { width: 50%; height: 50%; }
+            .concentric-ring.ring-2 { width: 70%; height: 70%; }
+            .concentric-ring.ring-3 { width: 90%; height: 90%; }
+            .shield-core {
+                width: 30%; /* Adjusted to be consistent */
+                height: 30%; /* Adjusted to be consistent */
+                min-width: 60px; /* Smaller minimum size for small screens */
+                min-height: 60px;
+            }
+            .shield-icon {
+                width: 40%;
+                height: 50%;
+            }
+            .threat-indicator {
+                font-size: 0.7em;
+            }
+            .threat-dot {
+                width: 15px;
+                height: 15px;
+            }
+            .flash {
+    padding: 12px;
+    margin: 15px auto;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 5px;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    position: relative;
+    z-index: 1000;
+}
+.flash.success { background-color: #2ecc71; }
+.flash.danger { background-color: #e74c3c; }
+.flash.info { background-color: #3498db; }
+.flash.warning { background-color: #f39c12; }
+
+        }
+        .stats {
+  display: flex;
+  justify-content: center;
+  gap: 50px;
+  margin-top: 40px;
+  text-align: center;
+  font-size: 20px;
+  color: #00d9ff;
+}
+
+.stats span {
+  display: block;
+  font-size: 40px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+#flash-container {
+    margin: 20px auto;
+    width: 60%;
+}
+.alert {
+    padding: 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    background-color: #f44336; /* Red background */
+    color: white;
+    margin-bottom: 15px;
+}
+
+        /* End of model.html CSS adjustments */
+    </style>
+</head>
+
+<body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div id="flash-container">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+
+    <nav>
+        <div class="logo">
+            <i class="fas fa-home-alt"></i>
+            CIRA on IIoT
+        </div>
+        <ul>
+            <li><a href="{{ url_for('home') }}" class="active">Home</a></li>
+            <li><a href="#features-section">Features</a></li>
+            <li><a href="#faq">FAQ</a></li>
+            {% if session.get('user') %}
+            {% else %}
+            <li><a href="#" onclick="openModal('register'); return false;">Register</a></li>
+            <li><a href="#" onclick="openModal('login'); return false;">Login</a></li>
+            {% endif %}
+        </ul>
+        <button onclick="toggleTheme()" style="margin-left:20px; background:none; border:none; font-size:24px; cursor:pointer;" aria-label="Toggle light/dark theme">🌙</button>
+    </nav>
+
+    <div class="content-wrapper" id="home">
+        <div class="content">
+            <h1 id="dynamic-heading" data-aos="fade-right"></h1>
+            <p id="dynamic-paragraph" data-aos="fade-right" data-aos-delay="200"></p>
+            <div class="btns" data-aos="fade-right" data-aos-delay="400">
+                <button class="register-btn">Register Now</button>
+                <button class="login-btn">Login</button>
+            </div>
+        </div>
+
+        <div id="dynamic-graphic" class="graphics" data-aos="fade-left">
+            <div class="hud-container">
+                <div class="grid-lines horizontal"></div>
+                <div class="grid-lines vertical"></div>
+
+                <div class="center-area">
+                    <div class="concentric-ring ring-1"></div>
+                    <div class="concentric-ring ring-2"></div>
+                    <div class="concentric-ring ring-3"></div>
+                    <div class="shield-core">
+                        <div class="shield-icon"></div>
+                    </div>
+                    <div class="scan-line-rotator">
+                        <div class="scan-line"></div>
+                    </div>
+                    <div class="dynamic-line dynamic-line-1"></div>
+                    <div class="dynamic-line dynamic-line-2"></div>
+                    <div class="dynamic-line dynamic-line-3"></div>
+                    <div class="dynamic-line dynamic-line-4"></div>
+                </div>
+
+                <div class="status-panel top-right">
+                    <h2>SHIELD STATUS</h2>
+                    <div class="status-item">
+                        <span>Security Level:</span> <span id="securityLevel" class="value green">HIGH</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Network Health:</span> <span id="networkHealth" class="value green">OPTIMAL</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Active Threats:</span> <span id="activeThreats" class="value red">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Performance:</span> <span id="performance" class="value green">EXCELLENT</span>
+                    </div>
+                    <div class="status-bar-container">
+                        <div class="status-bar" id="statusBar"></div>
+                    </div>
+                    <div class="scan-text">Scanning...</div>
+                </div>
+
+                <div class="threat-indicator threat-1" data-threat-id="1">
+                    <div class="threat-dot"></div>
+                    <div class="threat-text">THREAT DETECTED</div>
+                </div>
+                <div class="threat-indicator threat-2" data-threat-id="2">
+                    <div class="threat-dot"></div>
+                    <div class="threat-text">THREAT DETECTED</div>
+                </div>
+                <div class="threat-indicator threat-3" data-threat-id="3">
+                    <div class="threat-dot"></div>
+                    <div class="threat-text">THREAT DETECTED</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dots-navigation" id="dots-container">
+            </div>
+    </div>
+
+<div class="stats" data-aos="fade-up">
+  <div>
+    <span class="count" data-count="24">0</span><br />
+    Real-time Monitoring
+  </div>
+  <div>
+    <span class="count" data-count="99.9">0</span><br />
+    Threat Detection Rate
+  </div>
+  <div>
+    <span class="count" data-count="500">0</span><br />
+    Protected Networks
+  </div>
+</div>
+
+    <section id="features-section" class="features" data-aos="fade-up">
+        <h2>Additional Features</h2>
+        <div class="feature">
+            <i class="fas fa-shield-alt"></i>
+            <h3>Advanced Threat Detection</h3>
+            <p>Uses ML and Federated Learning to identify abnormal network behaviors.</p>
+        </div>
+        <div class="feature">
+            <i class="fas fa-chart-line"></i>
+            <h3>Predictive Analysis</h3>
+            <p>Anticipate risks before they occur with AI-powered forecasting.</p>
+        </div>
+        <div class="feature">
+            <i class="fas fa-bolt"></i>
+            <h3>Real-Time Alerts</h3>
+            <p>Get instant notifications when a threat is detected.</p>
+        </div>
+    </section>
+
+    <section class="testimonials" data-aos="fade-up">
+        <h2>What Our Clients Say</h2>
+        <p class="testimonial">"We've never felt more secure. The real-time analytics and threat response features have saved us multiple times. Highly recommended!"</p>
+    </section>
+
+    <section id="faq" class="features" data-aos="fade-up">
+        <h2>Frequently Asked Questions</h2>
+        <div class="feature">
+            <h3>How does threat detection work?</h3>
+            <p>Our AI monitors traffic, behavior, and patterns in real time.</p>
+            <p>This involves continuous analysis of network packets and device communications.</p>
+        </div>
+        <div class="feature">
+            <h3>Is my data safe?</h3>
+            <p>Yes, we use industry-standard encryption and secure data handling protocols.</p>
+            <p>We are compliant with global data privacy regulations to ensure your information is protected.</p>
+        </div>
+        <div class="feature">
+            <h3>What is CIRA on IIoT?</h3>
+            <p>CIRA on IIoT stands for Industrial Internet of Things, referring to interconnected sensors, instruments, and other devices networked together with computers' industrial applications.</p>
+        </div>
+    </section>
+
+    <div id="modal-overlay" style="display:none;" onclick="closeModal()"></div>
+
+    <div id="register-modal" class="modal-box">
+        <h2>Register Here</h2>
+        <form method="POST" action="{{ url_for('register') }}" id="registrationFormModal">
+            <div class="form-group">
+                <input type="text" id="modal-name" name="name" placeholder="Name" required>
+            </div>
+            <div class="form-group">
+                <input type="email" id="modal-email" name="email" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="modal-password" name="password" placeholder="Enter Password" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="modal-confirmPassword" name="confirmPassword" placeholder="Confirm Password" required>
+            </div>
+            <button type="submit" class="submit-btn">Register</button>
+        </form>
+        <div class="switch-form-link">
+            Already have an account? <a href="#" onclick="switchForm('login'); return false;">Login here</a>
+        </div>
+    </div>
+
+    <div id="login-modal" class="modal-box">
+        <h2>Login Here</h2>
+        <form method="POST" action="{{ url_for('login') }}" id="loginFormModal">
+            <div class="form-group">
+                <input type="email" id="login-email" name="email" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="login-password" name="password" placeholder="Password" required>
+            </div>
+            <button type="submit" class="submit-btn">Login</button>
+        </form>
+        <div class="switch-form-link">
+            Don't have an account? <a href="#" onclick="switchForm('register'); return false;">Register here</a>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-left">
+            &copy; 2025 CIRA on IIoT. All rights reserved.
+        </div>
+        <div class="footer-social">
+            <i class="fab fa-twitter"></i>
+            <i class="fab fa-linkedin"></i>
+            <i class="fab fa-github"></i>
+        </div>
+    </footer>
+
+    <div class="back-to-top" onclick="scrollToTop()">
+        <i class="fas fa-arrow-up"></i>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 1000, once: false });
+
+        const btn = document.querySelector('.back-to-top');
+        window.addEventListener('scroll', () => {
+            btn.style.display = window.scrollY > 300 ? 'block' : 'none';
+        });
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('light-mode');
+            const themeToggleBtn = document.querySelector('nav button');
+            if (body.classList.contains('light-mode')) {
+                themeToggleBtn.innerHTML = '☀';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle light theme');
+            } else {
+                themeToggleBtn.innerHTML = '🌙';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle dark theme');
+            }
+            localStorage.setItem('theme', body.classList.contains('light-mode') ? 'light-mode' : 'dark-mode');
+        }
+
+        function openModal(type) {
+            document.querySelectorAll('.modal-box').forEach(modal => {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            });
+
+            document.getElementById('modal-overlay').style.display = 'block';
+            document.getElementById('modal-overlay').classList.add('active');
+            const modal = document.getElementById(`${type}-modal`);
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+            document.getElementById('modal-overlay').style.display = 'none';
+            document.querySelectorAll('.modal-box').forEach(modal => {
+                modal.classList.remove('active');
+                setTimeout(() => { modal.style.display = 'none'; }, 300);
+            });
+        }
+
+        function switchForm(targetType) {
+            closeModal();
+            setTimeout(() => {
+                openModal(targetType);
+            }, 300);
+        }
+
+        document.querySelector('.register-btn').addEventListener('click', () => openModal('register'));
+        document.querySelector('.login-btn').addEventListener('click', () => openModal('login'));
+
+        document.getElementById('registrationFormModal').addEventListener('submit', function(event) {
+            // Client-side validation
+            const name = document.getElementById('modal-name').value.trim();
+            const email = document.getElementById('modal-email').value.trim();
+            const password = document.getElementById('modal-password').value;
+            const confirmPassword = document.getElementById('modal-confirmPassword').value;
+
+            if (name === '' || email === '' || password === '' || confirmPassword === '') {
+                alert('Please fill in all fields.');
+                event.preventDefault(); // Prevent form submission
+                return;
+            }
+
+            if (!/\S+@\S+\.\S/.test(email)) {
+                alert('Please enter a valid email address.');
+                event.preventDefault();
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                event.preventDefault();
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match.');
+                event.preventDefault();
+                return;
+            }
+            // If all client-side validation passes, allow the form to submit to Flask
+        });
+
+        document.getElementById('loginFormModal').addEventListener('submit', function(event) {
+            // Client-side validation
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (email === '' || password === '') {
+                alert('Please fill in all fields.');
+                event.preventDefault(); // Prevent submission if validation fails
+                return;
+            }
+
+            if (!/\S+@\S+\.\S/.test(email)) {
+                alert('Please enter a valid email address.');
+                event.preventDefault(); // Prevent submission if validation fails
+                return;
+            }
+            // If client-side validation passes, allow the form to submit naturally to Flask
+        });
+
+        // This function will automatically close flash messages after a delay.
+        document.addEventListener('DOMContentLoaded', () => {
+            const flashMessages = document.querySelectorAll('.flash');
+            flashMessages.forEach(flash => {
+                setTimeout(() => {
+                    flash.style.opacity = '0';
+                    setTimeout(() => flash.remove(), 500); // Remove after fade out
+                }, 5000); // Messages disappear after 5 seconds
+            });
+
+            const securityLevel = document.getElementById('securityLevel');
+            const networkHealth = document.getElementById('networkHealth');
+            const activeThreats = document.getElementById('activeThreats');
+            const performance = document.getElementById('performance');
+            const statusBar = document.getElementById('statusBar');
+            const threatIndicators = document.querySelectorAll('.threat-indicator');
+
+            let currentThreats = 0;
+
+            function updateStatus() {
+                const secLevel = Math.random();
+                if (secLevel > 0.8) {
+                    securityLevel.textContent = 'HIGH';
+                    securityLevel.className = 'value green';
+                } else if (secLevel > 0.4) {
+                    securityLevel.textContent = 'MEDIUM';
+                    securityLevel.className = 'value yellow';
+                } else {
+                    securityLevel.textContent = 'LOW';
+                    securityLevel.className = 'value red';
+                }
+
+                const netHealth = Math.random();
+                if (netHealth > 0.7) {
+                    networkHealth.textContent = 'OPTIMAL';
+                    networkHealth.className = 'value green';
+                } else if (netHealth > 0.3) {
+                    networkHealth.textContent = 'GOOD';
+                    networkHealth.className = 'value yellow';
+                } else {
+                    networkHealth.textContent = 'DEGRADED';
+                    networkHealth.className = 'value red';
+                }
+
+                const perfValue = Math.floor(Math.random() * 100);
+                performance.textContent = `${perfValue}%`;
+                statusBar.style.width = `${perfValue}%`;
+                if (perfValue > 70) {
+                    performance.className = 'value green';
+                    statusBar.style.backgroundColor = 'var(--hud-green)';
+                    statusBar.style.boxShadow = 'var(--text-glow-strength)';
+                } else if (perfValue > 30) {
+                    performance.className = 'value yellow';
+                    statusBar.style.backgroundColor = 'gold';
+                    statusBar.style.boxShadow = 'none';
+                } else {
+                    performance.className = 'value red';
+                    statusBar.style.backgroundColor = 'var(--hud-red)';
+                    statusBar.style.boxShadow = 'var(--threat-glow-strength)';
+                }
+
+                const newThreats = Math.floor(Math.random() * 4);
+                currentThreats = newThreats;
+                activeThreats.textContent = currentThreats;
+                if (currentThreats > 0) {
+                    activeThreats.className = 'value red';
+                } else {
+                    activeThreats.className = 'value green';
+                }
+
+                threatIndicators.forEach((indicator, index) => {
+                    if (index < currentThreats) {
+                        indicator.style.opacity = '1';
+                        indicator.style.display = 'flex';
+                    } else {
+                        indicator.style.opacity = '0';
+                        setTimeout(() => {
+                            if (indicator.style.opacity === '0') {
+                                indicator.style.display = 'none';
+                            }
+                        }, 500);
+                    }
+                });
+            }
+
+            updateStatus();
+            setInterval(updateStatus, 3000);
+        });
+
+        const dotsContainer = document.getElementById('dots-container');
+
+        const contentData = [
+            {
+                heading: "CIRA on IIoT : <br><span>Advanced Cyber Threat Detection</span> <br>for Industrial Networks",
+                paragraph: "Advanced AI-powered cybersecurity platform built to protect Industrial IoT environments from cyber threats. It combines real-time threat detection, predictive analytics, and multi-model machine learning to identify and respond to anomalies with precision. Featuring a synthetic traffic simulator, modular training pipeline, and integrated compliance tools, CIRA on IIoT ensures resilient, secure, and regulation-ready industrial operations."
+            },
+            {
+                heading: "Real-Time <br><span>Threat Detection</span> <br>& Response",
+                paragraph: "Instantly identify and respond to cyber threats targeting your IIoT infrastructure. Our AI-powered system continuously monitors network traffic, device behavior, and security patterns to detect anomalies before they become critical security incidents."
+            },
+            {
+                heading: "Predictive <br><span>Security Analytics</span> <br>for Industry",
+                paragraph: "Leverage machine learning algorithms to predict potential security vulnerabilities and proactively mitigate risks. Gain deep insights into your operational technology (OT) environment to enhance resilience and minimize downtime."
+            },
+            {
+                heading: "Integrated <br><span>Compliance & Reporting</span> <br>Solutions",
+                paragraph: "Simplify regulatory compliance and reporting with automated tools. Generate detailed security posture reports, audit trails, and compliance documentation effortlessly, ensuring adherence to industry standards and regulations."
+            }
+        ];
+
+        let currentContentIndex = 0;
+        const dynamicHeading = document.getElementById('dynamic-heading');
+        const dynamicParagraph = document.getElementById('dynamic-paragraph');
+
+        function updateTextContent(index) {
+            dynamicHeading.style.opacity = 0;
+            dynamicParagraph.style.opacity = 0;
+
+            setTimeout(() => {
+                const data = contentData[index];
+                dynamicHeading.innerHTML = data.heading;
+                dynamicParagraph.innerHTML = data.paragraph;
+                dynamicHeading.style.opacity = 1;
+                dynamicParagraph.style.opacity = 1;
+                AOS.refresh();
+                updateActiveDot(index);
+            }, 500);
+        }
+
+        let autoSlideIntervalText;
+        const AUTO_SLIDE_DURATION = 7000;
+
+        function startAutoSlideText() {
+            autoSlideIntervalText = setInterval(() => {
+                currentContentIndex = (currentContentIndex + 1) % contentData.length;
+                updateTextContent(currentContentIndex);
+            }, AUTO_SLIDE_DURATION);
+        }
+
+        function resetAutoSlideText() {
+            clearInterval(autoSlideIntervalText);
+            startAutoSlideText();
+        }
+
+        function createDots() {
+            dotsContainer.innerHTML = '';
+            contentData.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                dot.setAttribute('data-index', index);
+                dot.addEventListener('click', () => {
+                    currentContentIndex = index;
+                    updateTextContent(currentContentIndex);
+                    resetAutoSlideText();
+                });
+                dotsContainer.appendChild(dot);
+            });
+            updateActiveDot(currentContentIndex);
+        }
+
+        function updateActiveDot(activeIndex) {
+            document.querySelectorAll('.dot').forEach((dot, index) => {
+                if (index === activeIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        createDots();
+        updateTextContent(currentContentIndex);
+        startAutoSlideText();
+
+        document.querySelectorAll('nav ul li a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                if (this.getAttribute('href').startsWith('#')) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({ behavior: 'smooth' });
+                        document.querySelectorAll('nav ul li a').forEach(link => link.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                }
+            });
+        });
+
+        const sections = document.querySelectorAll('section, .content-wrapper');
+        const navLinks = document.querySelectorAll('nav ul li a');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                // Adjust this offset based on your fixed nav height or desired scroll position
+                if (pageYOffset >= sectionTop - 150) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                // Check if href contains current section ID for activation
+                if (link.getAttribute('href') && link.getAttribute('href').includes(current)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Set theme from local storage on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            const body = document.body;
+            const themeToggleBtn = document.querySelector('nav button');
+
+            if (savedTheme === 'light-mode') {
+                body.classList.add('light-mode');
+                themeToggleBtn.innerHTML = '☀';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle light theme');
+            } else {
+                body.classList.remove('light-mode');
+                themeToggleBtn.innerHTML = '🌙';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle dark theme');
+            }
+        });
+
+    </script>
+    <script>
+      const counts = document.querySelectorAll('.count');
+
+      counts.forEach(el => {
+        const update = () => {
+          const target = +el.getAttribute('data-count');
+          const current = +el.innerText;
+          const increment = (target - current) / 20;
+
+          if (current < target) {
+            el.innerText = (target % 1 !== 0) ? (current + increment).toFixed(1) : Math.ceil(current + increment);
+            setTimeout(update, 30);
+          } else {
+            el.innerText = target;
+          }
+        };
+        update();
+      });
+    </script>
+</body>
+</html>

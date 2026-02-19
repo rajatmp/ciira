@@ -1,0 +1,2 @@
+tcp.srcport,tcp.dstport,tcp.len,http.content_length,tcp.seq,tcp.ack,tcp.raw_ack
+12345,80,500,100,1000,5,6

@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real-time Threat Detection - CIRA on IIoT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    html, body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    body {
+      background-color: #0d121b;
+      color: #fff;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body.light-mode {
+      background-color: #f0f2f5;
+      color: #333;
+    }
+
+    /* Navigation Bar */
+    nav {
+      position: sticky;
+      top: 0;
+      width: 100%;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(15, 27, 42, 0.95);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      z-index: 10;
+    }
+
+    body.light-mode nav {
+      background-color: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    nav .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      color: #00d9ff;
+      font-size: 25px;
+      display: flex;
+      align-items: center;
+    }
+
+    nav .logo i {
+      font-size: 20px;
+      margin-right: 15px;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 30px;
+    }
+
+    nav ul li a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 300;
+      position: relative;
+      transition: color 0.3s ease;
+    }
+
+    body.light-mode nav ul li a {
+      color: #555;
+    }
+
+    nav ul li a::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -5px;
+      width: 0;
+      height: 2px;
+      background-color: #00d9ff;
+      transition: width 0.3s ease;
+    }
+
+    nav ul li a:hover::after,
+    nav ul li a.active::after {
+      width: 100%;
+    }
+
+    nav ul li a.active {
+      color: #00d9ff;
+      font-weight: 600;
+    }
+
+    body.light-mode nav ul li a.active {
+      color: #007bff;
+    }
+
+    nav ul li a:hover {
+      color: #00d9ff;
+    }
+
+    body.light-mode nav ul li a:hover {
+      color: #007bff;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+      color: #fff;
+      transition: transform 0.3s ease;
+    }
+
+    body.light-mode nav button {
+      color: #333;
+    }
+
+    nav button:hover {
+      transform: scale(1.1);
+    }
+
+    /* Main Content */
+    main {
+      flex-grow: 1;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    /* Background Animations */
+    main::before, main::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    main::before {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="400" stroke="%23005bff" stroke-width="3" fill="none" opacity="0.1"/><circle cx="500" cy="500" r="300" stroke="%23005bff" stroke-width="2.5" fill="none" opacity="0.15"/><path d="M500,0 L500,1000 M0,500 L1000,500" stroke="%23005bff" stroke-width="1" opacity="0.05"/></svg>');
+      background-size: cover;
+      animation: subtleRotate 60s linear infinite;
+      opacity: 0.8;
+    }
+
+    main::after {
+      background-image: repeating-linear-gradient(-45deg, rgba(0, 217, 255, 0.18) 0px, rgba(0, 217, 255, 0.18) 2px, transparent 2px, transparent 20px);
+      background-size: 60px 60px;
+      animation: scanLines 30s linear infinite;
+      opacity: 1;
+    }
+
+    @keyframes subtleRotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes scanLines {
+      from { background-position: 0 0; }
+      to { background-position: 600px 600px; }
+    }
+
+    body.light-mode main::before {
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="400" stroke="%233399ff" stroke-width="2" fill="none" opacity="0.1"/><circle cx="500" cy="500" r="300" stroke="%233399ff" stroke-width="1.5" fill="none" opacity="0.15"/><path d="M500,0 L500,1000 M0,500 L1000,500" stroke="%233399ff" stroke-width="0.5" opacity="0.05"/></svg>');
+    }
+    body.light-mode main::after {
+      background-image: repeating-linear-gradient(-45deg, rgba(0, 123, 255, 0.1) 0px, rgba(0, 123, 255, 0.1) 2px, transparent 2px, transparent 20px);
+    }
+
+    .prediction-section {
+      background-color: rgba(15, 27, 42, 0.9);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3);
+      width: 90%;
+      max-width: 900px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      animation: fadeIn 1s ease-out;
+      border: 1px solid rgba(0, 217, 255, 0.5);
+      margin-bottom: 40px;
+    }
+
+    body.light-mode .prediction-section {
+      background-color: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 123, 255, 0.3);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .prediction-section h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5em;
+      margin-bottom: 25px;
+      color: #00d9ff;
+      text-shadow: 0 0 10px rgba(0, 217, 255, 0.7);
+    }
+
+    body.light-mode .prediction-section h1 {
+      color: #007bff;
+      text-shadow: none;
+    }
+
+    .prediction-section h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.8em;
+      margin-top: 30px;
+      margin-bottom: 20px;
+      color: #00d9ff;
+    }
+
+    body.light-mode .prediction-section h2 {
+      color: #007bff;
+    }
+
+    .prediction-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .prediction-form > div {
+      text-align: left;
+    }
+
+    .prediction-form label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #a0aec0;
+    }
+
+    body.light-mode .prediction-form label {
+      color: #555;
+    }
+
+    .prediction-form input[type="number"],
+    .prediction-form input[type="text"] { /* Added type text for top_n */
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #005bff;
+      border-radius: 8px;
+      background-color: #0d121b;
+      color: #fff;
+      font-size: 1em;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    body.light-mode .prediction-form input[type="number"],
+    body.light-mode .prediction-form input[type="text"] {
+      background-color: #f8f9fa;
+      border-color: #a0aec0;
+      color: #333;
+    }
+
+    .prediction-form input[type="number"]:focus,
+    .prediction-form input[type="text"]:focus {
+      outline: none;
+      border-color: #00d9ff;
+      box-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+    }
+
+    body.light-mode .prediction-form input[type="number"]:focus,
+    body.light-mode .prediction-form input[type="text"]:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+    }
+
+    .form-actions { /* New style for filter options */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 30px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .form-actions .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-actions input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #00d9ff; /* Highlight color for checkbox */
+    }
+
+    body.light-mode .form-actions input[type="checkbox"] {
+        accent-color: #007bff;
+    }
+
+
+    .detect-button {
+      background: linear-gradient(to right, #e74c3c, #c0392b);
+      color: white;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.2em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+      box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+      grid-column: 1 / -1; /* Span across all columns */
+      margin-top: 20px;
+    }
+
+    .detect-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(231, 76, 60, 0.6);
+    }
+
+    .download-link {
+      display: inline-block;
+      margin-top: 20px;
+      background: linear-gradient(to right, #2ecc71, #27ae60);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+      box-shadow: 0 3px 10px rgba(46, 204, 113, 0.4);
+    }
+
+    .download-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(46, 204, 113, 0.6);
+    }
+
+    .prediction-results {
+      margin-top: 30px;
+      width: 100%;
+      overflow-x: auto; /* Enable horizontal scrolling for tables */
+    }
+
+    .prediction-results table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #1a2a40;
+      border-radius: 8px;
+      overflow: hidden; /* Ensures rounded corners apply to content */
+    }
+
+    body.light-mode .prediction-results table {
+      background-color: #fff;
+    }
+
+    .prediction-results th, .prediction-results td {
+      padding: 12px 15px;
+      border: 1px solid #005bff;
+      text-align: left;
+      font-family: 'Share Tech Mono', monospace;
+      color: #e0f7fa;
+    }
+
+    body.light-mode .prediction-results th, body.light-mode .prediction-results td {
+      border: 1px solid #a0aec0;
+      color: #333;
+    }
+
+    .prediction-results th {
+      background-color: #003366;
+      color: #00d9ff;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    body.light-mode .prediction-results th {
+      background-color: #e0f2f7;
+      color: #007bff;
+    }
+
+    .prediction-results tbody tr:nth-child(even) {
+      background-color: #0f1b2a;
+    }
+
+    body.light-mode .prediction-results tbody tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    .prediction-results tbody tr:hover {
+      background-color: #002244;
+    }
+
+    body.light-mode .prediction-results tbody tr:hover {
+      background-color: #e6f7ff;
+    }
+
+    /* Footer */
+    footer {
+      width: 100%;
+      padding: 20px;
+      text-align: center;
+      background-color: rgba(15, 27, 42, 0.95);
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.4);
+      margin-top: auto;
+      color: #a0aec0;
+    }
+
+    body.light-mode footer {
+      background-color: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+      color: #555;
+    }
+
+    /* Flash Messages */
+    .flash-messages {
+        position: fixed;
+        top: 80px; /* Below nav */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 600px;
+        z-index: 1000;
+    }
+
+    .flash {
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: bold;
+        color: white;
+        opacity: 1;
+        transition: opacity 0.5s ease-out;
+    }
+
+    .flash.success { background-color: #2ecc71; }
+    .flash.danger { background-color: #e74c3c; }
+    .flash.info { background-color: #3498db; }
+
+    .close-flash {
+        float: right;
+        cursor: pointer;
+        font-size: 1.2em;
+        font-weight: bold;
+        line-height: 1;
+        color: white;
+        margin-left: 10px;
+    }
+
+    /* Custom Message Box */
+    .message-box-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .message-box-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .message-box {
+        background-color: #1a2a40;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 217, 255, 0.5);
+        text-align: center;
+        max-width: 400px;
+        width: 90%;
+        border: 1px solid #00d9ff;
+        color: #fff;
+        position: relative;
+        transform: translateY(-20px);
+        opacity: 0;
+        animation: slideIn 0.3s forwards;
+    }
+
+    body.light-mode .message-box {
+        background-color: #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        border: 1px solid #007bff;
+        color: #333;
+    }
+
+    @keyframes slideIn {
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .message-box h3 {
+        font-family: 'Orbitron', sans-serif;
+        color: #00d9ff;
+        margin-bottom: 15px;
+        font-size: 1.5em;
+    }
+
+    body.light-mode .message-box h3 {
+        color: #007bff;
+    }
+
+    .message-box p {
+        margin-bottom: 25px;
+        font-size: 1.1em;
+    }
+
+    .message-box button {
+        background: linear-gradient(to right, #00d9ff, #005bff);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: 600;
+        transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+
+    body.light-mode .message-box button {
+        background: linear-gradient(to right, #007bff, #0056b3);
+    }
+
+    .message-box button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(0, 217, 255, 0.6);
+    }
+
+    body.light-mode .message-box button:hover {
+        box-shadow: 0 3px 10px rgba(0, 123, 255, 0.4);
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        flex-direction: column;
+        padding: 15px 20px;
+      }
+      nav ul {
+        margin-top: 15px;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .prediction-section h1 {
+        font-size: 2em;
+      }
+      .prediction-section h2 {
+        font-size: 1.5em;
+      }
+      .prediction-form {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo"><i class="fas fa-shield-alt"></i>CIRA on IIoT</div>
+    <ul>
+      <li><a href="/homee">Dashboard</a></li>
+      <li><a href="{{ url_for('upload_file') }}">Upload Data</a></li>
+      <li><a href="/model">Model Selection</a></li>
+      <li><a href="/predict" class="active">Threat Detection</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+    <button onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+  </nav>
+
+  <div class="flash-messages">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+              {% for category, message in messages %}
+                  <div class="flash {{ category }}">
+                      {{ message }}
+                      <span class="close-flash" onclick="this.parentElement.style.display='none';">&times;</span>
+                  </div>
+              {% endfor %}
+          {% endif %}
+      {% endwith %}
+  </div>
+
+  <main>
+    <section class="prediction-section" data-aos="fade-up">
+      <h1><i class="fas fa-eye mr-2"></i>Threat Detection</h1>
+
+      <h2>Batch Prediction Results ({{ algorithm | capitalize }} Algorithm)</h2>
+      {% if records %}
+        <div class="form-actions">
+            <div class="checkbox-group">
+                <input type="checkbox" id="threatOnly" onchange="applyFilters()" {% if threat_only %}checked{% endif %}>
+                <label for="threatOnly">Show Threats Only</label>
+            </div>
+            <div>
+                <label for="topN">Top N Results:</label>
+                <input type="number" id="topN" value="{{ top_n if top_n is not none else '' }}" placeholder="All" onchange="applyFilters()">
+            </div>
+        </div>
+        <div class="prediction-results">
+          <table>
+            <thead>
+              <tr>
+                {% for key in records[0].keys() %}
+                  <th>{{ key.replace('_', ' ') | title }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for record in records %}
+                <tr>
+                  {% for key, value in record.items() %}
+                    <td>{{ value }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if filename %}
+          <a href="{{ url_for('download_file', filename=filename) }}" class="download-link">
+            <i class="fas fa-download mr-2"></i>Download Results
+          </a>
+        {% endif %}
+      {% else %}
+        <p>No batch prediction results available. Please upload a CSV file and select a model first, or use the real-time detection below.</p>
+      {% endif %}
+
+      <h2>Real-time Threat Detection</h2>
+      <p>Enter network traffic parameters to detect threats instantly.</p>
+      <form action="/predict_realtime" method="POST" class="prediction-form">
+        <div><label for="src_port">Source Port:</label><input type="number" name="src_port" placeholder="e.g., 80" required /></div>
+        <div><label for="dst_port">Destination Port:</label><input type="number" name="dst_port" placeholder="e.g., 443" required /></div>
+        <div><label for="tcp_seq">TCP Sequence Number (Approx. Duration):</label><input type="number" name="tcp_seq" placeholder="e.g., 1000" required /></div>
+        <div><label for="tcp_len">TCP Length (Approx. Source Bytes):</label><input type="number" name="tcp_len" placeholder="e.g., 500" required /></div>
+        <div><label for="http_content_length">HTTP Content Length (Approx. Dest. Bytes):</label><input type="number" name="http_content_length" placeholder="e.g., 100" required /></div>
+        <div><label for="tcp_ack">TCP ACK Number (Approx. Source Packets):</label><input type="number" name="tcp_ack" placeholder="e.g., 5" required /></div>
+        <div><label for="tcp_raw_ack">TCP Raw ACK Number (Approx. Dest. Packets):</label><input type="number" name="tcp_raw_ack" placeholder="e.g., 6" required /></div>
+
+        <button type="submit" class="detect-button">🚨 Detect Threat</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 CIRA on IIoT. All rights reserved.</p>
+  </footer>
+
+  <div id="message-box-overlay" class="message-box-overlay">
+      <div class="message-box">
+          <h3 id="message-box-title"></h3>
+          <p id="message-box-content"></p>
+          <button onclick="hideMessageBox()">OK</button>
+      </div>
+  </div>
+
+  <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+  <script>
+    AOS.init({ duration: 1000, once: false });
+
+    function setThemeFromLocalStorage() {
+      const savedTheme = localStorage.getItem('theme');
+      const body = document.body;
+      const themeToggleBtn = document.querySelector('nav button');
+      if (savedTheme === 'light-mode') {
+        body.classList.add('light-mode');
+        themeToggleBtn.innerHTML = '☀';
+        themeToggleBtn.setAttribute('aria-label', 'Toggle dark theme');
+      } else {
+        body.classList.remove('light-mode');
+        themeToggleBtn.innerHTML = '🌙';
+        themeToggleBtn.setAttribute('aria-label', 'Toggle light theme');
+      }
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      body.classList.toggle('light-mode');
+      const themeToggleBtn = document.querySelector('nav button');
+      if (body.classList.contains('light-mode')) {
+        themeToggleBtn.innerHTML = '☀';
+        themeToggleBtn.setAttribute('aria-label', 'Toggle dark theme');
+        localStorage.setItem('theme', 'light-mode');
+      } else {
+        themeToggleBtn.innerHTML = '🌙';
+        themeToggleBtn.setAttribute('aria-label', 'Toggle light theme');
+        localStorage.setItem('theme', 'dark-mode');
+      }
+    }
+
+    // Custom Message Box Functions
+    function showMessageBox(title, message) {
+        document.getElementById('message-box-title').textContent = title;
+        document.getElementById('message-box-content').textContent = message;
+        document.getElementById('message-box-overlay').classList.add('active');
+    }
+
+    function hideMessageBox() {
+        document.getElementById('message-box-overlay').classList.remove('active');
+    }
+
+    function applyFilters() {
+        const algorithm = "{{ algorithm }}"; // Get the current algorithm from Flask context
+        const threatOnly = document.getElementById('threatOnly').checked;
+        const topN = document.getElementById('topN').value;
+
+        let url = `/predict?algorithm=${algorithm}`;
+        if (threatOnly) {
+            url += `&threat_only=true`;
+        }
+        if (topN && parseInt(topN) > 0) {
+            url += `&top_n=${topN}`;
+        }
+        window.location.href = url;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setThemeFromLocalStorage();
+
+      // Set the 'Threat Detection' link as active in the navigation bar on this page
+      document.querySelectorAll('nav ul li a').forEach(link => {
+        // Use link.pathname directly to avoid URL construction issues with relative paths
+        const linkPath = link.pathname;
+        if (linkPath === '/predict') {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

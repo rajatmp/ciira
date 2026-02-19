@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIRA on IIoT- Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://unpkg.com/aos@next/dist/aos.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        html, body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        body {
+            background-color: #0d121b;
+            color: #fff;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.light-mode {
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        /* Navigation Bar */
+        nav {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(15, 27, 42, 0.95);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            z-index: 10;
+        }
+
+        body.light-mode nav {
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        nav .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: #00d9ff;
+            font-size: 25px;
+            display: flex;
+            align-items: center;
+        }
+
+        nav .logo i {
+            font-size: 20px;
+            margin-right: 15px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+        }
+
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 300;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        body.light-mode nav ul li a {
+            color: #555;
+        }
+
+        nav ul li a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -5px;
+            width: 0;
+            height: 2px;
+            background-color: #00d9ff;
+            transition: width 0.3s ease;
+        }
+
+        nav ul li a:hover::after,
+        nav ul li a.active::after {
+            width: 100%;
+        }
+
+        nav ul li a.active {
+            color: #00d9ff;
+            font-weight: 600;
+        }
+
+        body.light-mode nav ul li a.active {
+            color: #007bff;
+        }
+
+        nav ul li a:hover {
+            color: #00d9ff;
+        }
+
+        body.light-mode nav ul li a:hover {
+            color: #007bff;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #fff;
+            transition: transform 0.3s ease;
+        }
+
+        body.light-mode nav button {
+            color: #333;
+        }
+
+        nav button:hover {
+            transform: scale(1.1);
+        }
+
+        /* Main Content */
+        main {
+            flex-grow: 1;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            overflow: hidden; /* For background animations */
+        }
+
+        /* Background Animations */
+        main::before, main::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        main::before {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="400" stroke="%23005bff" stroke-width="3" fill="none" opacity="0.1"/><circle cx="500" cy="500" r="300" stroke="%23005bff" stroke-width="2.5" fill="none" opacity="0.15"/><path d="M500,0 L500,1000 M0,500 L1000,500" stroke="%23005bff" stroke-width="1" opacity="0.05"/></svg>');
+            background-size: cover;
+            animation: subtleRotate 60s linear infinite;
+            opacity: 0.8;
+        }
+
+        main::after {
+            background-image: repeating-linear-gradient(-45deg, rgba(0, 217, 255, 0.18) 0px, rgba(0, 217, 255, 0.18) 2px, transparent 2px, transparent 20px);
+            background-size: 60px 60px;
+            animation: scanLines 30s linear infinite;
+            opacity: 1;
+        }
+
+        body.light-mode main::before {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 1000 1000"><circle cx="500" cy="500" r="400" stroke="%233399ff" stroke-width="2" fill="none" opacity="0.1"/><circle cx="500" cy="500" r="300" stroke="%233399ff" stroke-width="1.5" fill="none" opacity="0.15"/><path d="M500,0 L500,1000 M0,500 L1000,500" stroke="%233399ff" stroke-width="0.5" opacity="0.05"/></svg>');
+        }
+        body.light-mode main::after {
+            background-image: repeating-linear-gradient(-45deg, rgba(0, 123, 255, 0.1) 0px, rgba(0, 123, 255, 0.1) 2px, transparent 2px, transparent 20px);
+        }
+
+        .welcome-section {
+            padding: 60px 30px;
+            border-radius: 20px;
+            background-color: rgba(15, 27, 42, 0.9);
+            box-shadow: 0 10px 30px rgba(0, 217, 255, 0.3);
+            max-width: 800px;
+            width: 100%;
+            border: 1px solid rgba(0, 217, 255, 0.5);
+            animation: slideInUp 1s ease-out;
+            margin-bottom: 40px;
+        }
+
+        body.light-mode .welcome-section {
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0, 123, 255, 0.3);
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .welcome-section h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5em;
+            color: #00d9ff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(0, 217, 255, 0.8);
+        }
+
+        body.light-mode .welcome-section h1 {
+            color: #007bff;
+            text-shadow: none;
+        }
+
+        .welcome-section p {
+            font-size: 1.2em;
+            color: #a0aec0;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        body.light-mode .welcome-section p {
+            color: #555;
+        }
+
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .cta-button {
+            background: linear-gradient(to right, #00d9ff, #005bff);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 217, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        body.light-mode .cta-button {
+            background: linear-gradient(to right, #007bff, #0056b3);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.2);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 217, 255, 0.6);
+        }
+
+        body.light-mode .cta-button:hover {
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.4);
+        }
+
+        footer {
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            background-color: rgba(15, 27, 42, 0.95);
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.4);
+            margin-top: auto;
+            color: #a0aec0;
+        }
+
+        body.light-mode footer {
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+            color: #555;
+        }
+
+        /* Flash Messages */
+        .flash-messages {
+            position: fixed;
+            top: 80px; /* Below nav */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            z-index: 1000;
+        }
+
+        .flash {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            color: white;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .flash.success { background-color: #2ecc71; }
+        .flash.danger { background-color: #e74c3c; }
+        .flash.info { background-color: #3498db; }
+
+        .close-flash {
+            float: right;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            line-height: 1;
+            color: white;
+            margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                padding: 15px 20px;
+            }
+            nav ul {
+                margin-top: 15px;
+                flex-direction: column;
+                gap: 15px;
+            }
+            .welcome-section h1 {
+                font-size: 2.5em;
+            }
+            .welcome-section p {
+                font-size: 1em;
+            }
+            .cta-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo"><i class="fas fa-shield-alt"></i>CIRA on IIoT </div>
+        <ul>
+            <li><a href="/homee" class="active">Dashboard</a></li>
+            <li><a href="{{ url_for('upload_file') }}">Upload Data</a></li>
+            <li><a href="/model">Model Selection</a></li>
+            <li><a href="/predict">Threat Detection</a></li>
+            <li><a href="/logout">Logout</a></li>
+        </ul>
+        <button onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+    </nav>
+
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">
+                        {{ message }}
+                        <span class="close-flash" onclick="this.parentElement.style.display='none';">&times;</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <main>
+        <section class="welcome-section" data-aos="fade-up">
+            <h1>Welcome, {{ username }}!</h1>
+            <p>Your ultimate solution for real-time Industrial IoT (IIoT) threat detection. Leverage advanced machine learning models to safeguard your critical infrastructure from cyber threats.</p>
+            <div class="cta-buttons">
+                <a href="{{ url_for('upload_file') }}" class="cta-button"><i class="fas fa-upload"></i> Upload Data</a>
+                <a href="/model" class="cta-button"><i class="fas fa-brain"></i> Select Model</a>
+                <a href="/predict" class="cta-button"><i class="fas fa-eye"></i> Detect Threats</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 CIRA on IIoT. All rights reserved.</p>
+    </footer>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 1000, once: false });
+
+        function setThemeFromLocalStorage() {
+            const savedTheme = localStorage.getItem('theme');
+            const body = document.body;
+            const themeToggleBtn = document.querySelector('nav button');
+            if (savedTheme === 'light-mode') {
+                body.classList.add('light-mode');
+                themeToggleBtn.innerHTML = '☀';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle dark theme');
+            } else {
+                body.classList.remove('light-mode');
+                themeToggleBtn.innerHTML = '🌙';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle light theme');
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.classList.toggle('light-mode');
+            const themeToggleBtn = document.querySelector('nav button');
+            if (body.classList.contains('light-mode')) {
+                themeToggleBtn.innerHTML = '☀';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle dark theme');
+                localStorage.setItem('theme', 'light-mode');
+            } else {
+                themeToggleBtn.innerHTML = '🌙';
+                themeToggleBtn.setAttribute('aria-label', 'Toggle light theme');
+                localStorage.setItem('theme', 'dark-mode');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setThemeFromLocalStorage();
+            // Set the 'Dashboard' link as active in the navigation bar on this page
+            document.querySelectorAll('nav ul li a').forEach(link => {
+                const linkPath = link.pathname; // Use pathname directly
+                if (linkPath === '/homee.html' || linkPath === '/homee') {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

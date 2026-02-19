@@ -1,0 +1,5 @@
+attack_type,Count
+Normal,856
+DDoS_TCP,429
+Password,428
+Port_Scanning,428
